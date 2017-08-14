@@ -4,6 +4,8 @@ dcrawl is a simple, but smart, multi-threaded web crawler for randomly gathering
 
 [![baby-gopher](https://raw.githubusercontent.com/drnic/babygopher-site/gh-pages/images/babygopher-badge.png)](http://www.babygopher.org)
 
+![demo](https://raw.githubusercontent.com/kgretzky/dcrawl/master/img/dcrawl.gif)
+
 ## How it works?
 
 dcrawl takes one site URL as input and detects all `<a href=...>` links in the site's body. Each found link is put into the queue. Successively, each queued link is crawled in the same way, branching out to more URLs found in links on each site's body.
