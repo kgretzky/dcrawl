@@ -44,7 +44,7 @@ usage: dcrawl -url URL -out OUTPUT_FILE -t THREADS
   -url string
         URL to start scraping from
   -v bool
-        verbose
+        verbose (default false)
 ```
 
 ## License
