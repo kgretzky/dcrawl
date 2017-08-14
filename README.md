@@ -22,7 +22,7 @@ How **smart crawling** works:
 
 ```
 go build dcrawl.go
-./dcrawl -url http://wired.com -out ~/domain_lists/domains1.txt -mt 8
+./dcrawl -url http://wired.com -out ~/domain_lists/domains1.txt -t 8
 ```
 
 ## Usage
