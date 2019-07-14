@@ -1,23 +1,23 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
+	"golang.org/x/net/publicsuffix"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
-	"net"
-	"strings"
-	"regexp"
-	"flag"
 	"os"
-	"bufio"
+	"regexp"
+	"strings"
 	"time"
-	"golang.org/x/net/publicsuffix"
 )
 
 const Version = "1.0"
-const BodyLimit = 1024*1024
+const BodyLimit = 1024 * 1024
 const MaxQueuedUrls = 4096
 const MaxVisitedUrls = 8192
 const UserAgent = "dcrawl/1.0"
@@ -25,20 +25,20 @@ const UserAgent = "dcrawl/1.0"
 var http_client *http.Client
 
 var (
-	start_url = flag.String("url", "", "URL to start scraping from")
-	output_file = flag.String("out", "", "output file to save hostnames to")
-	max_threads = flag.Int("t", 8, "number of concurrent threads (def. 8)")
+	start_url           = flag.String("url", "", "URL to start scraping from")
+	output_file         = flag.String("out", "", "output file to save hostnames to")
+	max_threads         = flag.Int("t", 8, "number of concurrent threads (def. 8)")
 	max_urls_per_domain = flag.Int("mu", 5, "maximum number of links to spider per hostname (def. 5)")
-	max_subdomains = flag.Int("ms", 10, "maximum different subdomains for one domain (def. 10)")
-	verbose = flag.Bool("v", false, "verbose (def. false)")
+	max_subdomains      = flag.Int("ms", 10, "maximum different subdomains for one domain (def. 10)")
+	verbose             = flag.Bool("v", false, "verbose (def. false)")
 )
 
 type ParsedUrl struct {
-	u string
+	u    string
 	urls []string
 }
 
-func stringInArray(s string, sa []string) (bool) {
+func stringInArray(s string, sa []string) bool {
 	for _, x := range sa {
 		if x == s {
 			return true
@@ -84,15 +84,15 @@ func get_html(u string) ([]byte, error) {
 	return b, nil
 }
 
-func find_all_urls(u string, b []byte) ([]string) {
+func find_all_urls(u string, b []byte) []string {
 	r, _ := regexp.Compile(`<a\s+(?:[^>]*?\s+)?href=["\']([^"\']*)`)
-	urls := r.FindAllSubmatch(b,-1)
+	urls := r.FindAllSubmatch(b, -1)
 	var rurls []string
 	ru, _ := regexp.Compile(`^(?:ftp|http|https):\/\/(?:[\w\.\-\+]+:{0,1}[\w\.\-\+]*@)?(?:[a-z0-9\-\.]+)(?::[0-9]+)?(?:\/|\/(?:[\w#!:\.\?\+=&amp;%@!\-\/\(\)]+)|\?(?:[\w#!:\.\?\+=&amp;%@!\-\/\(\)]+))?$`)
 	for _, ua := range urls {
 		if ru.Match(ua[1]) {
 			rurls = append(rurls, string(ua[1]))
-		} else if len(ua)>0 && len(ua[1])>0 && ua[1][0] == '/' {
+		} else if len(ua) > 0 && len(ua[1]) > 0 && ua[1][0] == '/' {
 			up, err := url.Parse(u)
 			if err == nil {
 				ur := up.Scheme + "://" + up.Host + string(ua[1])
@@ -128,7 +128,7 @@ func process_urls(in <-chan string, out chan<- ParsedUrl) {
 	}
 }
 
-func is_blacklisted(u string) (bool) {
+func is_blacklisted(u string) bool {
 	var blhosts []string = []string{
 		"google.com", ".google.", "facebook.com", "twitter.com", ".gov", "youtube.com", "wikipedia.org", "wikisource.org", "wikibooks.org", "deviantart.com",
 		"wiktionary.org", "wikiquote.org", "wikiversity.org", "wikia.com", "deviantart.com", "blogspot.", "wordpress.com", "tumblr.com", "about.com",
@@ -148,10 +148,10 @@ func create_http_client() *http.Client {
 			Timeout: 10 * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout: 5 * time.Second,
-		DisableKeepAlives: true,
+		DisableKeepAlives:   true,
 	}
 	client := &http.Client{
-		Timeout: time.Second * 10,
+		Timeout:   time.Second * 10,
 		Transport: transport,
 	}
 	return client
@@ -199,7 +199,7 @@ func main() {
 	var qurls []string
 	var thosts []string
 
-	fo, err := os.OpenFile(*output_file, os.O_APPEND, 0666)
+	fo, err := os.OpenFile(*output_file, os.O_APPEND|os.O_RDWR, 0666)
 	if os.IsNotExist(err) {
 		fo, err = os.Create(*output_file)
 	}
@@ -222,7 +222,7 @@ func main() {
 		nd++
 	}
 	fmt.Printf("[+] loaded %d domains\n\n", nd)
-	
+
 	w := bufio.NewWriter(fo)
 
 	su := *start_url
@@ -266,7 +266,7 @@ func main() {
 			urls := purl.urls
 			for _, u := range urls {
 				// strip # out of url if exists
-				u = strings.Split(u,"#")[0]
+				u = strings.Split(u, "#")[0]
 
 				up, err := url.Parse(u)
 				if err == nil {
